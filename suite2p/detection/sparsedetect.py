@@ -71,23 +71,14 @@ def square_conv2(mov,lx):
 def downsample(mov: np.ndarray, taper_edge: bool = True) -> np.ndarray:
     """Returns a pixel-downsampled movie from 'mov', tapering the edges of 'taper_edge' is True."""
     n_frames, Ly, Lx = mov.shape
+    movd = (mov[:, 0:-1:2, 0:-1:2] + mov[:, 0:-1:2, 1::2] + mov[:, 1::2, 0:-1:2] + mov[:, 1::2, 1::2]) / 4
 
-    nu = 2 if taper_edge else 1
+    if taper_edge and Ly % 2:
+        movd[:, -1, :] /= 2
+    if taper_edge and Lx % 2:
+        movd[:, :, -1] /= 2
 
-    # bin along Y
-    Ly0 = 2*int(Ly/2)
-    movd = (mov[:, 0:Ly0:2, :] + mov[:, 1:Ly0:2, :]) / 2
-
-    if Ly % 2 == 1:
-        movd[:, -1, :] /= nu
-
-    # bin along X
-    Lx0 = 2*int(Lx/2)
-    mov2 = (movd[:, :, 0:Lx0:2] + movd[:, :, 1:Lx0:2]) / 2
-    if Lx % 2 == 1:
-        mov2[:, :, -1] /= nu
-
-    return mov2
+    return movd
 
 
 def threshold_reduce(mov: np.ndarray, intensity_threshold: float) -> np.ndarray:
